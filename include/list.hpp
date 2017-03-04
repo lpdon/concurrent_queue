@@ -47,9 +47,7 @@ public:
     return tail;
   }
 
-//  void insertNode( const Node<T> * const arg_node );
   void insertNode( const T &arg_node );
-//  void removeNode( const Node<T> * const arg_node );
   void removeNode( const T &arg_node );
 
 private:
@@ -59,40 +57,31 @@ private:
 };
 
 template<class T>
-//void cList<T>::insertNode( const Node<T> * const arg_node )
 void cList<T>::insertNode( const T &arg_node )
 {
-//  if ( arg_node != NULL )
+  Node<T> * const loc_node = new Node<T>();
+  loc_node->obj = arg_node;
+  loc_node->previous = NULL;
+  loc_node->next = NULL;
+
+  if ( ( head == NULL ) && ( tail == NULL ) )
   {
-    Node<T> * const loc_node = new Node<T>();
-    loc_node->obj = arg_node;
-    loc_node->previous = NULL;
-    loc_node->next = NULL;
-
-    if ( ( head == NULL ) && ( tail == NULL ) )
-    {
-      head = loc_node;
-      tail = loc_node;
-//      head->previous = NULL;
-//      head->next = tail;
-//      tail->previous = head;
-//      tail->next = NULL;
-    }
-    else
-    {
-      Node<T> * const loc_currentTail = tail;
-      tail = loc_node;
-      tail->previous = loc_currentTail;
-      tail->next = NULL;
-      loc_currentTail->next = tail;
-    }
-
-    ++size;
+    head = loc_node;
+    tail = loc_node;
   }
+  else
+  {
+    Node<T> * const loc_oldTail = tail;
+    tail = loc_node;
+    tail->previous = loc_oldTail;
+    tail->next = NULL;
+    loc_oldTail->next = tail;
+  }
+
+  ++size;
 }
 
 template<class T>
-//void cList<T>::removeNode( const Node<T> * const arg_node )
 void cList<T>::removeNode( const T &arg_node )
 {
   Node<T> * loc_node = head;
