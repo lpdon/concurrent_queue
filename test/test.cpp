@@ -60,6 +60,16 @@ TEST( ListTestCase, RemoveElement )
   EXPECT_FALSE( loc_list.getTail()->obj != loc_msg[ 2U ] );
 }
 
+TEST( ListTestCase, RemoveFromEmptyList )
+{
+  cList<Message> loc_list;
+  Message loc_msg;
+
+  EXPECT_EQ( loc_list.getSize(), 0U );
+  loc_list.removeNode( loc_msg );
+  EXPECT_EQ( loc_list.getSize(), 0U );
+}
+
 }
 
 namespace nsQueue {
