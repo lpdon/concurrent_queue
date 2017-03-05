@@ -34,5 +34,3 @@ In the test folder there are some tests for basic functionality. To run them aft
 ```make test```
 
 ***
-
-For info and suggestions, please contact me

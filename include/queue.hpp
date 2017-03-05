@@ -9,7 +9,9 @@
   #include "list.hpp"
 #endif
 
-#include <pthread.h>
+#ifndef PTHREAD_H
+  #include <pthread.h>
+#endif
 
 #ifdef __linux__
   #include <gtest/gtest_prod.h>
@@ -31,24 +33,12 @@ public:
     pthread_cond_init( &cond, NULL );
   }
 
-  inline T getFront( void )
-  {
-    pthread_mutex_lock( &mutex );
-    while ( list.getSize() == 0U )
-    {
-      pthread_cond_wait( &cond, &mutex );
-    }
-    const T loc_front = list.getHead()->obj;
-    pthread_mutex_unlock( &mutex );
-    return loc_front;
-  }
-
   inline uint32_t getNumElements( void )
   {
-    const uint32_t loc_size = list.getSize();
-    return loc_size;
+    return list.getSize();
   }
 
+  T getFront( void );
   void enqueue( const T &arg_element );
   T dequeue( void );
   void removeWithKey( const typename T::keyType arg_key );
@@ -74,6 +64,33 @@ private:
 #endif
 };
 
+/*
+ * Returns a copy of the first element,
+ * locks if the queue is empty. In a non
+ * concurrent scenario, one should check
+ * the size before using the method.
+ *
+ * Runtime: O(1)
+ */
+template<class T, uint32_t TSIZE>
+T cQueue<T, TSIZE>::getFront( void )
+{
+  pthread_mutex_lock( &mutex );
+  while ( list.getSize() == 0U )
+  {
+    pthread_cond_wait( &cond, &mutex );
+  }
+  const T loc_front = list.getHead()->obj;
+  pthread_mutex_unlock( &mutex );
+  return loc_front;
+}
+
+/*
+ * Adds an object to the end of the
+ * queue.
+ *
+ * Runtime: O(1)
+ */
 template<class T, uint32_t TSIZE>
 void cQueue<T, TSIZE>::enqueue( const T &arg_element )
 {
@@ -83,6 +100,15 @@ void cQueue<T, TSIZE>::enqueue( const T &arg_element )
   pthread_mutex_unlock( &mutex );
 }
 
+/*
+ * Removes and returns the beginning
+ * of the queue, locks if the queue
+ * is empty. In a non concurrent scenario,
+ * one should check the size before
+ * using the method.
+ *
+ * Runtime: O(1)
+ */
 template<class T, uint32_t TSIZE>
 T cQueue<T, TSIZE>::dequeue( void )
 {
@@ -97,6 +123,20 @@ T cQueue<T, TSIZE>::dequeue( void )
   return loc_front;
 }
 
+/*
+ * Removes all objects of the queue
+ * with a given key. The object is
+ * expected to specify a keyType and
+ * have a key() method.
+ *
+ * Runtime:
+ * Best case: O(1), only one object with key
+ * Average case: O(n), where n = number of
+ * objects with the key
+ * Worst case: O(n), where n = number of
+ * objects in the queue, if the number of
+ * collisions is too high
+ */
 template<class T, uint32_t TSIZE>
 void cQueue<T, TSIZE>::removeWithKey( const typename T::keyType arg_key )
 {
