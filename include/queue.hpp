@@ -5,21 +5,20 @@
   #include <inttypes.h>
 #endif
 
-//#ifndef MESSAGE_HPP
-//  #include "message.hpp"
-//#endif
-
 #ifndef LIST_HPP
   #include "list.hpp"
 #endif
 
 #include <pthread.h>
 
+#ifdef __linux__
+  #include <gtest/gtest_prod.h>
+#endif
+
 using namespace nsList;
 
 namespace nsQueue
 {
-
 
 template<class T, uint32_t TSIZE=64U>
 class cQueue
@@ -69,6 +68,10 @@ private:
   {
     return ( static_cast<uint32_t>( arg_key ) % TSIZE );
   }
+
+#ifdef __linux__
+  FRIEND_TEST( QueueTestCase, RemoveWithKey );
+#endif
 };
 
 template<class T, uint32_t TSIZE>

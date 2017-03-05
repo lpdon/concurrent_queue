@@ -18,10 +18,21 @@ using namespace std;
 
 pthread_mutex_t mutexCout;
 
+struct sThreadArg
+{
+  uint32_t id;
+  nsQueue::cQueue<Message> &queue;
+};
+
 void * producerThread( void * arg_queue )
 {
-  nsQueue::cQueue<Message> * loc_pQueue = reinterpret_cast<nsQueue::cQueue<Message> *>( arg_queue );
-  nsQueue::cQueue<Message>& loc_queue = *loc_pQueue;
+//  uint32_t loc_id = 0U;//pthread_self();
+//  nsQueue::cQueue<Message> * loc_pQueue = reinterpret_cast<nsQueue::cQueue<Message> *>( arg_queue );
+//  nsQueue::cQueue<Message>& loc_queue = *loc_pQueue;
+
+  sThreadArg * loc_pArg = reinterpret_cast<sThreadArg *>( arg_queue );
+  uint32_t loc_id = loc_pArg->id;
+  nsQueue::cQueue<Message>& loc_queue = loc_pArg->queue;
 
   while ( true )
   {
@@ -30,12 +41,12 @@ void * producerThread( void * arg_queue )
     loc_queue.enqueue( loc_message );
 
     pthread_mutex_lock( &mutexCout );
-    cout << "Producer -- " << " size: " << loc_queue.getNumElements() << " what: " << loc_message.what << endl;
+    cout << "Producer -- " << " id: " << loc_id << " size: " << loc_queue.getNumElements() << " what: " << loc_message.what << endl;
     pthread_mutex_unlock( &mutexCout );
 
 //    usleep( 100000/2 );
-//    sleep( 1 );
-    nanosleep((const struct timespec[]){{0, 250000000L}}, NULL);
+    sleep( 1 );
+//    nanosleep((const struct timespec[]){{0, 250000000L}}, NULL);
   }
 
   pthread_exit( NULL );
@@ -44,8 +55,13 @@ void * producerThread( void * arg_queue )
 
 void * consumerThread( void * arg_queue )
 {
-  nsQueue::cQueue<Message> * loc_pQueue = reinterpret_cast<nsQueue::cQueue<Message> *>( arg_queue );
-  nsQueue::cQueue<Message>& loc_queue = *loc_pQueue;
+//  uint32_t loc_id = 0U;//pthread_self();
+//  nsQueue::cQueue<Message> * loc_pQueue = reinterpret_cast<nsQueue::cQueue<Message> *>( arg_queue );
+//  nsQueue::cQueue<Message>& loc_queue = *loc_pQueue;
+
+  sThreadArg * loc_pArg = reinterpret_cast<sThreadArg *>( arg_queue );
+  uint32_t loc_id = loc_pArg->id;
+  nsQueue::cQueue<Message>& loc_queue = loc_pArg->queue;
 
   while ( true )
   {
@@ -55,55 +71,27 @@ void * consumerThread( void * arg_queue )
     Message loc_message = loc_queue.dequeue();
 
     pthread_mutex_lock( &mutexCout );
-    cout << "Consumer1 -- " << " size: " << loc_queue.getNumElements() << " what: " << loc_message.what << endl;
+    cout << "            " << " id: " << loc_id << " size: " << loc_queue.getNumElements() << " what: " << loc_message.what << " -- Consumer" << endl;
 //    cout << "Consumer -- " << " size: " << loc_queue.getNumElements() << endl;
     pthread_mutex_unlock( &mutexCout );
 
 //    usleep( 100000 );
-//    sleep( 2 );
-    nanosleep((const struct timespec[]){{0, 500000000L}}, NULL);
+    sleep( 2 );
+//    nanosleep((const struct timespec[]){{0, 500000000L}}, NULL);
   }
   pthread_exit( NULL );
   return NULL;
 }
-
-void * consumerThread2( void * arg_queue )
-{
-  nsQueue::cQueue<Message> * loc_pQueue = reinterpret_cast<nsQueue::cQueue<Message> *>( arg_queue );
-  nsQueue::cQueue<Message>& loc_queue = *loc_pQueue;
-
-  while ( true )
-  {
-//    Message loc_message;
-//    loc_queue.enqueue( loc_message );
-    loc_queue.getFront();
-    Message loc_message = loc_queue.dequeue();
-
-    pthread_mutex_lock( &mutexCout );
-    cout << "Consumer2 -- " << " size: " << loc_queue.getNumElements() << " what: " << loc_message.what << endl;
-//    cout << "Consumer -- " << " size: " << loc_queue.getNumElements() << endl;
-    pthread_mutex_unlock( &mutexCout );
-
-//    usleep( 100000 );
-//    sleep( 2 );
-    nanosleep((const struct timespec[]){{0, 500000000L}}, NULL);
-  }
-  pthread_exit( NULL );
-  return NULL;
-}
-
 
 int main() {
-	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
-
 	nsQueue::cQueue<Message> messageQueue;
 
-	Message kapps, kapps2, kapps3;
+//	Message kapps, kapps2, kapps3;
 //	messageQueue.enqueue( kapps );
 //	messageQueue.enqueue( kapps2 );
 //	messageQueue.enqueue( kapps3 );
 
-	messageQueue.removeWithKey( kapps.key() );
+//	messageQueue.removeWithKey( kapps.key() );
 
 	srand ( time( NULL ) );
 
@@ -111,23 +99,24 @@ int main() {
 
 	pthread_mutex_init( &mutexCout, NULL );
 
-	pthread_t producer;
-	pthread_t producer2;
-	pthread_t consumer;
-	pthread_t consumer2;
+	uint8_t loc_size = 10U;
+	pthread_t producer[ loc_size ];
+	pthread_t consumer[ loc_size ];
 
-	pthread_create( &producer, NULL, producerThread, (void *)&messageQueue );
-	pthread_create( &producer2, NULL, producerThread, (void *)&messageQueue );
-	pthread_create( &consumer, NULL, consumerThread, (void *)&messageQueue );
-	pthread_create( &consumer2, NULL, consumerThread2, (void *)&messageQueue );
+	for ( uint8_t i = 0U; i < loc_size; ++i )
+	{
+	  sThreadArg loc_arg = { i, messageQueue };
+	  pthread_create( &producer[ i ], NULL, producerThread, (void *)&loc_arg );
+    pthread_create( &consumer[ i ], NULL, consumerThread, (void *)&loc_arg );
+//    pthread_create( &producer[ i ], NULL, producerThread, (void *)&messageQueue );
+//    pthread_create( &consumer[ i ], NULL, consumerThread, (void *)&messageQueue );
+	}
 
-//	messageQueue.dequeue();
-//	messageQueue.dequeue();
-//	messageQueue.dequeue();
-//
-//	messageQueue.dequeue();
-
-	pthread_join( producer, NULL );
+  for ( uint8_t i = 0U; i < loc_size; ++i )
+  {
+    pthread_join( producer[ i ], NULL );
+    pthread_join( consumer[ i ], NULL );
+  }
 
 	return 0;
 }

@@ -1,7 +1,8 @@
 #SRC
 
 include_directories ( 
-  ${QUEUE_SOURCE_DIR}/include
+  ${QUEUE_SOURCE_DIR}/include  
+  ${QUEUE_SOURCE_DIR}/lib/googletest/googletest/include 
 )
 
 find_package (Threads REQUIRED)
