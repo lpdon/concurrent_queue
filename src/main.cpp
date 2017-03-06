@@ -22,14 +22,17 @@ void * producerThread( void * arg_queue )
   uint32_t loc_id = loc_pArg->id;
   nsQueue::cQueue<Message>& loc_queue = loc_pArg->queue;
 
+  srand( time( NULL ) ^ int( loc_id ) );
+
   while ( true )
   {
     Message loc_message;
     loc_message.what = rand()%1000;
     loc_queue.enqueue( loc_message );
+    uint32_t loc_size = loc_queue.getNumElements();
 
     pthread_mutex_lock( &mutexCout );
-    cout << "Producer -- " << " id: " << loc_id << " size: " << loc_queue.getNumElements() << " what: " << loc_message.what << endl;
+    cout << "Producer -- " << " id: " << loc_id << " size: " << loc_size << " what: " << loc_message.what << endl;
     pthread_mutex_unlock( &mutexCout );
 
     sleep( 1 );
@@ -48,9 +51,10 @@ void * consumerThread( void * arg_queue )
   while ( true )
   {
     Message loc_message = loc_queue.dequeue();
+    uint32_t loc_size = loc_queue.getNumElements();
 
     pthread_mutex_lock( &mutexCout );
-    cout << "            " << " id: " << loc_id << " size: " << loc_queue.getNumElements() << " what: " << loc_message.what << " -- Consumer" << endl;
+    cout << "            " << " id: " << loc_id << " size: " << loc_size << " what: " << loc_message.what << " -- Consumer" << endl;
     pthread_mutex_unlock( &mutexCout );
 
     sleep( 2 );
@@ -59,14 +63,13 @@ void * consumerThread( void * arg_queue )
   return NULL;
 }
 
-int main() {
+int main( int argc, char* argv[] )
+{
 	nsQueue::cQueue<Message> messageQueue;
-
-	srand ( time( NULL ) );
 
 	pthread_mutex_init( &mutexCout, NULL );
 
-	uint8_t loc_size = 10U;
+	uint8_t loc_size = atoi( argv[1] );
 	pthread_t producer[ loc_size ];
 	pthread_t consumer[ loc_size ];
 

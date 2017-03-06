@@ -12,10 +12,14 @@ The classic way to dequeue objects from a queue would be to read the front and e
 
 The queue also supports removing all the objects which match a given key. Using only a list the only possibility is to brute-force through all the elements. To avoid this, it uses a simple hash table. Every line of the table has all the address of a given key. As the table has limited size and collision could happen (more than one key in each line), every line is a list and handles it through chaining.
 
-###Usage
-```testqueue```
+Developed and tested on Ubuntu 14.04. An .exe for Windows is provided, built using Eclipse internal builder. 
 
-Running this provides and "endless" multiple producer-consumer scenario. 
+###Usage
+```testqueue n```
+
+where n = number of producers and consumers.
+
+Running this provides and "endless" producer-consumer scenario. 
 
 ###Install instructions
 

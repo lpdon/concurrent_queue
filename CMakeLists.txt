@@ -9,8 +9,7 @@ set ( CMAKE_CXX_COMPILER g++ )
 set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread" )
 
-#add_definitions( "-DHAVE_STRUCT_TIMESPEC -O0 -g3" )
-add_definitions( "-DHAVE_STRUCT_TIMESPEC -Wall" )
+add_definitions( "-DHAVE_STRUCT_TIMESPEC -Wall -pthread" )
 
 project ( QUEUE C CXX )
 
