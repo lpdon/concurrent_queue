@@ -19,6 +19,8 @@ Developed and tested on Ubuntu 14.04. An .exe for Windows is provided, built usi
 
 where n = number of producers and consumers.
 
+P.S: depending on the number of producers the log order can be confusing. 
+
 Running this provides and "endless" producer-consumer scenario. 
 
 ###Install instructions
