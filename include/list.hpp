@@ -32,6 +32,8 @@ public:
 
   }
 
+  ~cList( void );
+
   inline uint32_t getSize( void ) const
   {
     return size;
@@ -55,6 +57,18 @@ private:
   Node<T> * tail;
   uint32_t size;
 };
+
+template<class T>
+cList<T>::~cList( void )
+{
+  Node<T> * loc_node = head;
+
+  while ( loc_node != NULL )
+  {
+    removeNode( loc_node->obj );
+    loc_node = head;
+  }
+}
 
 template<class T>
 void cList<T>::insertNode( const T &arg_node )
