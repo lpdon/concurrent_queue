@@ -59,20 +59,20 @@ void consumerThread( uint32_t arg_id, nsQueue::cQueue<Message>& arg_queue )
 
 int main( int argc, char* argv[] )
 {
-	nsQueue::cQueue<Message> messageQueue;
+  nsQueue::cQueue<Message> messageQueue;
 
-	//uint8_t loc_size = atoi( argv[1] );
+  //uint8_t loc_size = atoi( argv[1] );
   const uint8_t loc_size = 2U;
-	std::thread producer[ loc_size ];
-	std::thread consumer[ loc_size ];
+  std::thread producer[ loc_size ];
+  std::thread consumer[ loc_size ];
 
-	for ( uint8_t i = 0U; i < loc_size; ++i )
-	{
-	  sThreadArg loc_arg = { i, messageQueue };
+  for ( uint8_t i = 0U; i < loc_size; ++i )
+  {
+    sThreadArg loc_arg = { i, messageQueue };
 
     producer[ i ] = std::thread( [ &i, &messageQueue ]{ return producerThread( i, messageQueue ); } );
     consumer[ i ] = std::thread( [ &i, &messageQueue ]{ return consumerThread( i, messageQueue ); } );
-	}
+  }
 
   for ( uint8_t i = 0U; i < loc_size; ++i )
   {
@@ -80,5 +80,5 @@ int main( int argc, char* argv[] )
     consumer[i].join();
   }
 
-	return 0;
+  return 0;
 }
