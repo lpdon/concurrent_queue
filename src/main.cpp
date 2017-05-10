@@ -68,8 +68,6 @@ int main( int argc, char* argv[] )
 
   for ( uint8_t i = 0U; i < loc_size; ++i )
   {
-    sThreadArg loc_arg = { i, messageQueue };
-
     producer[ i ] = std::thread( [ &i, &messageQueue ]{ return producerThread( i, messageQueue ); } );
     consumer[ i ] = std::thread( [ &i, &messageQueue ]{ return consumerThread( i, messageQueue ); } );
   }
