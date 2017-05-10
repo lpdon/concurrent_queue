@@ -9,8 +9,12 @@
   #include "list.hpp"
 #endif
 
-#ifndef PTHREAD_H
-  #include <pthread.h>
+#ifndef _MUTEX_
+  #include <mutex>
+#endif
+
+#ifndef _CONDITION_VARIABLE_
+  #include <condition_variable>
 #endif
 
 #ifdef __linux__
@@ -28,9 +32,9 @@ class cQueue
 public:
   cQueue( void )
   : list()
+  , mutex()
   {
-    pthread_mutex_init( &mutex, NULL );
-    pthread_cond_init( &cond, NULL );
+
   }
 
   inline uint32_t getNumElements( void )
@@ -47,8 +51,8 @@ private:
   cList<T>   list;
   cList<T *> buckets[ TSIZE ];
 
-  pthread_mutex_t mutex;
-  pthread_cond_t cond;
+  std::mutex mutex;
+  std::condition_variable cond;
 
   void _enqueue( const T &arg_element );
   void _dequeue( void );
@@ -75,13 +79,9 @@ private:
 template<class T, uint32_t TSIZE>
 T cQueue<T, TSIZE>::getFront( void )
 {
-  pthread_mutex_lock( &mutex );
-  while ( list.getSize() == 0U )
-  {
-    pthread_cond_wait( &cond, &mutex );
-  }
+  std::unique_lock<std::mutex> loc_lock( mutex );
+  cond.wait( loc_lock, [this]{ return ( list.getSize() != 0U ); } );
   const T loc_front = list.getHead()->obj;
-  pthread_mutex_unlock( &mutex );
   return loc_front;
 }
 
@@ -94,10 +94,11 @@ T cQueue<T, TSIZE>::getFront( void )
 template<class T, uint32_t TSIZE>
 void cQueue<T, TSIZE>::enqueue( const T &arg_element )
 {
-  pthread_mutex_lock( &mutex );
-  _enqueue( arg_element );
-  pthread_cond_signal( &cond );
-  pthread_mutex_unlock( &mutex );
+  {
+    std::lock_guard<std::mutex> loc_lock( mutex );
+    _enqueue( arg_element );
+  }
+  cond.notify_all();
 }
 
 /*
@@ -112,14 +113,10 @@ void cQueue<T, TSIZE>::enqueue( const T &arg_element )
 template<class T, uint32_t TSIZE>
 T cQueue<T, TSIZE>::dequeue( void )
 {
-  pthread_mutex_lock( &mutex );
-  while ( list.getSize() == 0U )
-  {
-    pthread_cond_wait( &cond, &mutex );
-  }
+  std::unique_lock<std::mutex> loc_lock( mutex );
+  cond.wait( loc_lock, [this]{ return ( list.getSize() != 0U ); } );
   const T loc_front = list.getHead()->obj;
   _dequeue();
-  pthread_mutex_unlock( &mutex );
   return loc_front;
 }
 
@@ -140,9 +137,8 @@ T cQueue<T, TSIZE>::dequeue( void )
 template<class T, uint32_t TSIZE>
 void cQueue<T, TSIZE>::removeWithKey( const typename T::keyType arg_key )
 {
-  pthread_mutex_lock( &mutex );
+  std::lock_guard<std::mutex> lock( mutex );
   _removeWithKey( arg_key );
-  pthread_mutex_unlock( &mutex );
 }
 
 template<class T, uint32_t TSIZE>
@@ -156,7 +152,7 @@ void cQueue<T, TSIZE>::_enqueue( const T &arg_element )
 template<class T, uint32_t TSIZE>
 void cQueue<T, TSIZE>::_dequeue( void )
 {
-  if ( list.getHead() != NULL )
+  if ( list.getHead() != nullptr )
   {
     const T loc_obj = list.getHead()->obj;
     const uint32_t loc_idx = hashKey( loc_obj.key() );
@@ -171,7 +167,7 @@ void cQueue<T, TSIZE>::_removeWithKey( const typename T::keyType arg_key )
   const uint32_t loc_idx = hashKey( arg_key );
   Node<T*> * loc_pBucketNode = const_cast< Node<T*> * >( buckets[ loc_idx ].getHead() );
 
-  while ( loc_pBucketNode != NULL )
+  while ( loc_pBucketNode != nullptr )
   {
     T * loc_pObj = loc_pBucketNode->obj;
     loc_pBucketNode = loc_pBucketNode->next;

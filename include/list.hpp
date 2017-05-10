@@ -25,8 +25,8 @@ class cList
 {
 public:
   cList( void )
-  : head( NULL )
-  , tail( NULL )
+  : head( nullptr )
+  , tail( nullptr )
   , size( 0U )
   {
 
@@ -63,7 +63,7 @@ cList<T>::~cList( void )
 {
   Node<T> * loc_node = head;
 
-  while ( loc_node != NULL )
+  while ( loc_node != nullptr )
   {
     removeNode( loc_node->obj );
     loc_node = head;
@@ -75,10 +75,10 @@ void cList<T>::insertNode( const T &arg_node )
 {
   Node<T> * const loc_node = new Node<T>();
   loc_node->obj = arg_node;
-  loc_node->previous = NULL;
-  loc_node->next = NULL;
+  loc_node->previous = nullptr;
+  loc_node->next = nullptr;
 
-  if ( ( head == NULL ) && ( tail == NULL ) )
+  if ( ( head == nullptr ) && ( tail == nullptr ) )
   {
     head = loc_node;
     tail = loc_node;
@@ -88,7 +88,7 @@ void cList<T>::insertNode( const T &arg_node )
     Node<T> * const loc_oldTail = tail;
     tail = loc_node;
     tail->previous = loc_oldTail;
-    tail->next = NULL;
+    tail->next = nullptr;
     loc_oldTail->next = tail;
   }
 
@@ -100,17 +100,17 @@ void cList<T>::removeNode( const T &arg_node )
 {
   Node<T> * loc_node = head;
 
-  while ( ( loc_node != NULL ) && ( loc_node->obj != arg_node ) )
+  while ( ( loc_node != nullptr ) && ( loc_node->obj != arg_node ) )
   {
     loc_node = loc_node->next;
   }
 
-  if ( loc_node != NULL )
+  if ( loc_node != nullptr )
   {
     Node<T> * loc_previous = loc_node->previous;
     Node<T> * loc_next = loc_node->next;
 
-    if ( loc_previous != NULL )
+    if ( loc_previous != nullptr )
     {
       loc_previous->next = loc_next;
     }
@@ -119,7 +119,7 @@ void cList<T>::removeNode( const T &arg_node )
       head = loc_next;
     }
 
-    if ( loc_next != NULL )
+    if ( loc_next != nullptr )
     {
       loc_next->previous = loc_previous;
     }

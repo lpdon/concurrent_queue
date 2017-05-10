@@ -3,12 +3,11 @@
 #include "message.hpp"
 #include "queue.hpp"
 
-#include <unistd.h>
-#include <time.h>
+#include <thread>
+#include <mutex>
+#include <chrono>
 
-using namespace std;
-
-pthread_mutex_t mutexCout;
+std::mutex mutexCout;
 
 struct sThreadArg
 {
@@ -16,74 +15,69 @@ struct sThreadArg
   nsQueue::cQueue<Message> &queue;
 };
 
-void * producerThread( void * arg_queue )
+void producerThread( uint32_t arg_id, nsQueue::cQueue<Message>& arg_queue )
 {
-  sThreadArg * loc_pArg = reinterpret_cast<sThreadArg *>( arg_queue );
-  uint32_t loc_id = loc_pArg->id;
-  nsQueue::cQueue<Message>& loc_queue = loc_pArg->queue;
+  auto loc_id = arg_id;
+  auto& loc_queue = arg_queue;
 
-  srand( time( NULL ) ^ int( loc_id ) );
+  srand( time( nullptr ) ^ int( loc_id ) );
 
   while ( true )
   {
     Message loc_message;
     loc_message.what = rand()%1000;
     loc_queue.enqueue( loc_message );
-    uint32_t loc_size = loc_queue.getNumElements();
+    auto loc_size = loc_queue.getNumElements();
 
-    pthread_mutex_lock( &mutexCout );
-    cout << "Producer -- " << " id: " << loc_id << " size: " << loc_size << " what: " << loc_message.what << endl;
-    pthread_mutex_unlock( &mutexCout );
+    {
+      std::lock_guard<std::mutex> loc_lock( mutexCout );
+      std::cout << "Producer -- " << " id: " << loc_id << " size: " << loc_size << " what: " << loc_message.what << std::endl;
+    }
 
-    sleep( 1 );
+    std::this_thread::sleep_for( std::chrono::seconds( 1 ) );
   }
-
-  pthread_exit( NULL );
-  return NULL;
 }
 
-void * consumerThread( void * arg_queue )
+void consumerThread( uint32_t arg_id, nsQueue::cQueue<Message>& arg_queue )
 {
-  sThreadArg * loc_pArg = reinterpret_cast<sThreadArg *>( arg_queue );
-  uint32_t loc_id = loc_pArg->id;
-  nsQueue::cQueue<Message>& loc_queue = loc_pArg->queue;
+  auto loc_id = arg_id;
+  auto& loc_queue = arg_queue;
 
   while ( true )
   {
-    Message loc_message = loc_queue.dequeue();
-    uint32_t loc_size = loc_queue.getNumElements();
+    auto loc_message = loc_queue.dequeue();
+    auto loc_size = loc_queue.getNumElements();
 
-    pthread_mutex_lock( &mutexCout );
-    cout << "            " << " id: " << loc_id << " size: " << loc_size << " what: " << loc_message.what << " -- Consumer" << endl;
-    pthread_mutex_unlock( &mutexCout );
+    {
+      std::lock_guard<std::mutex> loc_lock( mutexCout );
+      std::cout << "            " << " id: " << loc_id << " size: " << loc_size << " what: " << loc_message.what << " -- Consumer" << std::endl;
+    }
 
-    sleep( 2 );
+    std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
   }
-  pthread_exit( NULL );
-  return NULL;
 }
 
 int main( int argc, char* argv[] )
 {
 	nsQueue::cQueue<Message> messageQueue;
 
-	pthread_mutex_init( &mutexCout, NULL );
-
-	uint8_t loc_size = atoi( argv[1] );
-	pthread_t producer[ loc_size ];
-	pthread_t consumer[ loc_size ];
+	//uint8_t loc_size = atoi( argv[1] );
+  const uint8_t loc_size = 2U;
+	std::thread producer[ loc_size ];
+	std::thread consumer[ loc_size ];
 
 	for ( uint8_t i = 0U; i < loc_size; ++i )
 	{
 	  sThreadArg loc_arg = { i, messageQueue };
-	  pthread_create( &producer[ i ], NULL, producerThread, (void *)&loc_arg );
-    pthread_create( &consumer[ i ], NULL, consumerThread, (void *)&loc_arg );
+
+    producer[ i ] = std::thread( [ &i, &messageQueue ]{ return producerThread( i, messageQueue ); } );
+    consumer[ i ] = std::thread( [ &i, &messageQueue ]{ return consumerThread( i, messageQueue ); } );
 	}
 
   for ( uint8_t i = 0U; i < loc_size; ++i )
   {
-    pthread_join( producer[ i ], NULL );
-    pthread_join( consumer[ i ], NULL );
+    producer[i].join();
+    consumer[i].join();
   }
 
 	return 0;

@@ -7,11 +7,9 @@ endif ()
 set ( CMAKE_C_COMPILER gcc )
 set ( CMAKE_CXX_COMPILER g++ )
 set ( CMAKE_BUILD_TYPE Debug )
-set ( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread" )
+set ( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 
-add_definitions( "-DHAVE_STRUCT_TIMESPEC -Wall -pthread" )
-
-project ( QUEUE C CXX )
+project ( queue C CXX )
 
 add_subdirectory ( src )  
 
